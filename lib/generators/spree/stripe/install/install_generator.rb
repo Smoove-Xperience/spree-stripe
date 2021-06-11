@@ -17,8 +17,8 @@ module Spree
         end
 
         def create_migrations
-          migration_template "add_intent_and_ephemeral_key_to_payment.rb", "db/migrate/add_intent_and_ephemeral_key_to_payment.rb", migration_version: migration_version
-          migration_template "add_spree_customer_id_to_user.rb", "db/migrate/add_spree_customer_id_to_user.rb", migration_version: migration_version
+          migration_template "create_stripe_payment_sources.rb", "db/migrate/create_stripe_payment_sources.rb", migration_version: migration_version
+          migration_template "add_stripe_customer_id_to_user.rb", "db/migrate/add_stripe_customer_id_to_user.rb", migration_version: migration_version
         end
 
         def run_migrations
