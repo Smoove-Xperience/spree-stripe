@@ -19,7 +19,11 @@ module Spree
     end
 
     def source_required?
-      false
+      true
+    end
+
+    def payment_source_class
+      Spree::StripePaymentSource
     end
 
     def auto_capture?
@@ -44,13 +48,23 @@ module Spree
       "stripe"
     end
 
-    def purchase(amount, source, options = {})
-      binding.pry
+    def stripe_provider
+      ::Stripe.api_key = secret_key
+
+      ::Stripe
     end
 
     def authorize(amount, source, options = {})
-      binding.pry
-      if (response.status == 200)
+      ephemeral_key = create_ephemeral_key(source)
+      payment_intent = create_payment_intent(amount, source)
+
+      if (ephemeral_key.secret && payment_intent.client_secret)
+        source.ephemeral_key = ephemeral_key.secret
+        source.intent_key = payment_intent.client_secret
+        source.created = payment_intent.created
+        source.status = payment_intent.status
+        source.save!
+
         ActiveMerchant::Billing::Response.new(true, 'Stripe payment intent created')
       else
         ActiveMerchant::Billing::Response.new(false, 'Failed to create stripe payment intent')
@@ -59,6 +73,39 @@ module Spree
 
     def capture(*_args)
       ActiveMerchant::Billing::Response.new(true, 'Stripe will automatically capture the amount after creating a shipment.')
+    end
+
+    private
+
+    def create_customer_id(user)
+      if user.stripe_customer_id.present?
+        user.stripe_customer_id
+      else
+        customer = stripe_provider::Customer.create
+        user.stripe_customer_id = customer.id
+        user.save!
+        
+        customer.id
+      end
+    end
+
+    def create_ephemeral_key(source)
+      customer_id = create_customer_id(source.user)
+
+      stripe_provider::EphemeralKey.create(
+        { customer: customer_id },
+        { stripe_version: '2020-08-27' }
+      )
+    end
+
+    def create_payment_intent(amount, source)
+      customer_id = create_customer_id(source.user)
+
+      stripe_provider::PaymentIntent.create({
+        amount: amount,
+        currency: 'sgd',
+        customer: customer_id
+      })
     end
   end
 end
