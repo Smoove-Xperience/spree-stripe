@@ -59,12 +59,22 @@ module Spree
       ::Stripe
     end
 
+    def create_ephemeral_key(source)
+      customer_id = create_customer_id(source.user)
+
+      ephemeral_key = stripe_provider::EphemeralKey.create(
+        { customer: customer_id },
+        { stripe_version: '2020-08-27' }
+      )
+
+      ephemeral_key.secret
+    end
+
     def authorize(amount, source, options = {})
-      ephemeral_key = create_ephemeral_key(source)
       payment_intent = create_payment_intent(amount, source)
 
-      if (ephemeral_key.secret && payment_intent.client_secret)
-        source.ephemeral_key = ephemeral_key.secret
+      if (payment_intent.client_secret)
+        source.intent_id = payment_intent.id
         source.intent_key = payment_intent.client_secret
         source.created = payment_intent.created
         source.status = payment_intent.status
@@ -92,15 +102,6 @@ module Spree
         
         customer.id
       end
-    end
-
-    def create_ephemeral_key(source)
-      customer_id = create_customer_id(source.user)
-
-      stripe_provider::EphemeralKey.create(
-        { customer: customer_id },
-        { stripe_version: '2020-08-27' }
-      )
     end
 
     def create_payment_intent(amount, source)

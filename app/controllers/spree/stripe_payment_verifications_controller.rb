@@ -12,32 +12,35 @@ module Spree
           payload, sig_header, payment_method.signing_secret
         )
       rescue JSON::ParserError => e
-        # Invalid payload
-        status 400
+        head :bad_request
         return
       rescue Stripe::SignatureVerificationError => e
-        # Invalid signature
-        status 400
+        head :bad_request
         return
       end
 
       intent = event.data.object
       source = StripePaymentSource.find_by(intent_key: intent.client_secret)
-      @payment = source.payments.first
 
-      case event.type
-      when 'payment_intent.processing'
-        transition_to_pending!
-      when 'payment_intent.succeeded'
-        transition_to_paid!
-      when 'payment_intent.canceled'
-        transition_to_failed!
+      if (source.present?)
+        @payment = source.payment
+  
+        case event.type
+        when 'payment_intent.processing'
+          transition_to_pending!
+        when 'payment_intent.succeeded'
+          transition_to_paid!
+        when 'payment_intent.canceled'
+          transition_to_failed!
+        else
+          puts "Unhandled event type: #{event.type}"
+        end
+        
+        source.update(status: intent.status)
+        head :ok
       else
-        puts "Unhandled event type: #{event.type}"
+        head :not_found
       end
-
-      source.update(status: intent.status)
-      status 200
     end
 
     private
@@ -66,7 +69,7 @@ module Spree
       return if @payment.failed?
 
       @payment.failure!
-      @payment.order.update(shipment_state: "canceled", payment_state: "failed")
+      @payment.order.update(shipment_state: "canceled")
     end
   end
 end
