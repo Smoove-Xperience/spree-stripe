@@ -7,6 +7,7 @@ module Spree
       payload = request.body.read
       sig_header = request.headers["HTTP_STRIPE_SIGNATURE"]
 
+      
       begin
         event = stripe_provider::Webhook.construct_event(
           payload, sig_header, payment_method.signing_secret
@@ -14,7 +15,7 @@ module Spree
       rescue JSON::ParserError => e
         head :bad_request
         return
-      rescue Stripe::SignatureVerificationError => e
+      rescue stripe_provider::SignatureVerificationError => e
         head :bad_request
         return
       end
@@ -26,14 +27,12 @@ module Spree
         @payment = source.payment
   
         case event.type
-        when 'payment_intent.processing'
-          transition_to_pending!
-        when 'payment_intent.succeeded'
-          transition_to_paid!
-        when 'payment_intent.canceled'
-          transition_to_failed!
-        else
-          puts "Unhandled event type: #{event.type}"
+          when 'payment_intent.processing'
+            transition_to_pending!
+          when 'payment_intent.succeeded'
+            transition_to_paid!
+          when 'payment_intent.canceled'
+            transition_to_failed!
         end
         
         source.update(status: intent.status)

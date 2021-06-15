@@ -80,9 +80,9 @@ module Spree
         source.status = payment_intent.status
         source.save!
 
-        ActiveMerchant::Billing::Response.new(true, 'Stripe payment intent created')
+        ActiveMerchant::Billing::Response.new(true, 'Stripe payment intent created.')
       else
-        ActiveMerchant::Billing::Response.new(false, 'Failed to create stripe payment intent')
+        ActiveMerchant::Billing::Response.new(false, 'Failed to create stripe payment intent.')
       end
     end
 
