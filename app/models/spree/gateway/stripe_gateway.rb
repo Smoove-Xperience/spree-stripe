@@ -5,6 +5,7 @@ module Spree
     
     preference :publishable_key, :string
     preference :secret_key, :string
+    preference :signing_secret, :string
 
     def publishable_key
       ENV['PUBLISHABLE_KEY'] || preferred_publishable_key
@@ -12,6 +13,10 @@ module Spree
 
     def secret_key
       ENV['SECRET_KEY'] || preferred_secret_key
+    end
+
+    def signing_secret
+      ENV['SIGNING_SECRET'] || preferred_signing_secret
     end
 
     def provider_class
