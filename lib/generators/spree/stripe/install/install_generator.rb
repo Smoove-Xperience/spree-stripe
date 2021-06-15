@@ -17,8 +17,8 @@ module Spree
         end
 
         def create_migrations
-          migration_template "create_stripe_payment_sources.rb", "db/migrate/create_stripe_payment_sources.rb", migration_version: migration_version
-          migration_template "add_stripe_customer_id_to_user.rb", "db/migrate/add_stripe_customer_id_to_user.rb", migration_version: migration_version
+          migration_template "create_spree_stripe_payment_sources.rb", "db/migrate/create_spree_stripe_payment_sources.spree_stripe.rb", migration_version: migration_version
+          migration_template "add_stripe_customer_id_to_spree_users.rb", "db/migrate/add_stripe_customer_id_to_spree_users.spree_stripe.rb", migration_version: migration_version
         end
 
         def run_migrations
