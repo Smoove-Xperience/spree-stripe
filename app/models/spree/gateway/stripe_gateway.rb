@@ -70,6 +70,16 @@ module Spree
       ephemeral_key.secret
     end
 
+    def cancel(payment_source)
+      response = stripe_provider::Refund.create({
+        payment_intent: payment_source.intent_id
+      })
+      
+      if (response.status == "succeeded")
+        payment_source.payment
+      end
+    end
+
     def authorize(amount, source, options = {})
       payment_intent = create_payment_intent(amount, source)
 
