@@ -76,7 +76,9 @@ module Spree
       })
       
       if (response.status == "succeeded")
-        payment_source.payment
+        ActiveMerchant::Billing::Response.new(true, 'Stripe refund success.')
+      else
+        ActiveMerchant::Billing::Response.new(false, 'Stripe refund failed.')    
       end
     end
 
