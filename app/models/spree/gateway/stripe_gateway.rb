@@ -70,6 +70,30 @@ module Spree
       ephemeral_key.secret
     end
 
+    def cancel(payment_source)
+      response = stripe_provider::PaymentIntent.cancel(payment_source.intent_id)
+      
+      if (response.status == "canceled")
+        payment_source.update(status: "canceled")
+        ActiveMerchant::Billing::Response.new(true, 'Stripe payment cancellation success.')
+      else
+        ActiveMerchant::Billing::Response.new(false, 'Stripe payment cancellation failed.')    
+      end
+    end
+    
+    def refund(payment_source)
+      response = stripe_provider::Refund.create({
+        payment_intent: payment_source.intent_id
+        })
+        
+      if (response.status == "succeeded")
+        payment_source.update(status: "refunded")
+        ActiveMerchant::Billing::Response.new(true, 'Stripe payment refund success.')
+      else
+        ActiveMerchant::Billing::Response.new(false, 'Stripe payment refund failed.')    
+      end
+    end
+
     def authorize(amount, source, options = {})
       payment_intent = create_payment_intent(amount, source)
 
