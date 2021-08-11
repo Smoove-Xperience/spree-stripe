@@ -7,7 +7,6 @@ module Spree
       payload = request.body.read
       sig_header = request.headers["HTTP_STRIPE_SIGNATURE"]
 
-      
       begin
         event = stripe_provider::Webhook.construct_event(
           payload, sig_header, payment_method.signing_secret
@@ -38,7 +37,7 @@ module Spree
         source.update(status: intent.status)
         head :ok
       else
-        head :not_found
+        head :ok
       end
     end
 
